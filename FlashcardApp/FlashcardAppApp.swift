@@ -12,10 +12,13 @@ import SwiftData
 struct FlashcardAppApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Flashcard.self,
+            Deck.self,
+            UserProgress.self,
+            ReviewSession.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
@@ -26,6 +29,11 @@ struct FlashcardAppApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .task {
+                    // Seed demo data on first launch
+                    let modelContext = sharedModelContainer.mainContext
+                    DeckSeeder.seedDemoData(modelContext: modelContext)
+                }
         }
         .modelContainer(sharedModelContainer)
     }
