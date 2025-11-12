@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  FlashcardApp
 //
-//  Created by Jan Kühne on 10.11.25.
+//  Created by Jan Kühne on 12.11.25.
 //
 
 import SwiftUI
