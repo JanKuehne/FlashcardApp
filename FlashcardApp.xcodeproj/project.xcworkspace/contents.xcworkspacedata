@@ -4,4 +4,16 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:README.md">
+   </FileRef>
+   <FileRef
+      location = "group:GIT_COMMIT_GUIDE.md">
+   </FileRef>
+   <FileRef
+      location = "group:quick-commit.sh">
+   </FileRef>
+   <FileRef
+      location = "group:COMMIT_CHECKLIST.md">
+   </FileRef>
 </Workspace>

@@ -2,7 +2,7 @@
 //  ReviewSessionView.swift
 //  FlashcardApp
 //
-//  Created by Jan Kühne on 12.11.25.
+//  Created by Jan Kühne on 10.11.25.
 //
 
 import SwiftUI
@@ -12,6 +12,7 @@ struct ReviewSessionView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Query private var decks: [Deck]
+    @Query private var userProgress: [UserProgress]
     
     @State private var cards: [Flashcard] = []
     @State private var currentIndex = 0
@@ -19,8 +20,11 @@ struct ReviewSessionView: View {
     @State private var sessionComplete = false
     @State private var correctCount = 0
     @State private var showImpact = false
+    @State private var soundEffect: SoundEffectType? = nil
     
-    let dailyGoal = 20
+    var dailyGoal: Int {
+        userProgress.first?.dailyGoal ?? 20
+    }
     
     var body: some View {
         ZStack {
@@ -32,6 +36,12 @@ struct ReviewSessionView: View {
                 reviewCardView
             } else {
                 loadingView
+            }
+            
+            if let effect = soundEffect {
+                SoundEffectText(type: effect)
+                    .transition(.scale.combined(with: .opacity))
+                    .zIndex(100)
             }
         }
         .task {
@@ -127,6 +137,18 @@ struct ReviewSessionView: View {
                 .frame(maxWidth: .infinity, maxHeight: 450)
                 .padding(.horizontal, 24)
                 .onTapGesture {
+                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                    
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                        soundEffect = .swoosh
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        withAnimation {
+                            soundEffect = nil
+                        }
+                    }
+                    
                     withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                         isFlipped.toggle()
                     }
@@ -146,7 +168,7 @@ struct ReviewSessionView: View {
                     HStack(spacing: 12) {
                         MangaGradeButton(
                             title: "FALSCH",
-                            emoji: "😕",
+                            symbol: "✕",
                             color: .red
                         ) {
                             gradeCard(grade: .wrong)
@@ -154,7 +176,7 @@ struct ReviewSessionView: View {
                         
                         MangaGradeButton(
                             title: "SCHWER",
-                            emoji: "😐",
+                            symbol: "～",
                             color: .orange
                         ) {
                             gradeCard(grade: .hard)
@@ -162,7 +184,7 @@ struct ReviewSessionView: View {
                         
                         MangaGradeButton(
                             title: "LEICHT",
-                            emoji: "😊",
+                            symbol: "✓",
                             color: .green
                         ) {
                             gradeCard(grade: .easy)
@@ -181,20 +203,39 @@ struct ReviewSessionView: View {
             Color.black.ignoresSafeArea()
             
             VStack(spacing: 30) {
-                VStack(spacing: 8) {
-                    Text("完了!")
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundColor(.yellow)
-                        .textCase(.uppercase)
+                ZStack {
+                    StarburstEffect()
                     
-                    Text("🎉")
-                        .font(.system(size: 80))
-                    
-                    Text("GUT GEMACHT!")
-                        .font(.system(size: 36, weight: .black, design: .rounded))
-                        .foregroundColor(.white)
-                        .shadow(color: .blue, radius: 10)
+                    VStack(spacing: 8) {
+                        Text("完了!")
+                            .font(.system(size: 36, weight: .black, design: .rounded))
+                            .foregroundColor(.yellow)
+                            .shadow(color: .orange, radius: 10)
+                        
+                        ZStack {
+                            Text("SUCCESS!")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundColor(.black)
+                                .offset(x: 4, y: 4)
+                            
+                            Text("SUCCESS!")
+                                .font(.system(size: 48, weight: .black, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.white, .yellow],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        
+                        Text("GUT GEMACHT!")
+                            .font(.system(size: 28, weight: .black, design: .rounded))
+                            .foregroundColor(.white)
+                            .shadow(color: .blue, radius: 8)
+                    }
                 }
+                .frame(height: 200)
                 
                 VStack(spacing: 20) {
                     MangaStatRow(
@@ -289,14 +330,33 @@ struct ReviewSessionView: View {
         
         if grade == .wrong {
             UINotificationFeedbackGenerator().notificationOccurred(.error)
+            
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                soundEffect = .oops
+            }
         } else if grade == .easy {
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             showImpact = true
+            
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                soundEffect = .correct
+            }
+            
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 showImpact = false
             }
         } else {
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                soundEffect = .good
+            }
+        }
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            withAnimation {
+                soundEffect = nil
+            }
         }
         
         card.timesReviewed += 1
@@ -450,24 +510,33 @@ struct MangaCardFace: View {
 
 struct MangaGradeButton: View {
     let title: String
-    let emoji: String
+    let symbol: String
     let color: Color
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 6) {
-                Text(emoji)
-                    .font(.system(size: 32))
+            VStack(spacing: 8) {
+                ZStack {
+                    Text(symbol)
+                        .font(.system(size: 40, weight: .black, design: .rounded))
+                        .foregroundColor(.black)
+                        .offset(x: 3, y: 3)
+                    
+                    Text(symbol)
+                        .font(.system(size: 40, weight: .black, design: .rounded))
+                        .foregroundColor(.white)
+                }
+                
                 Text(title)
                     .font(.system(.caption, design: .rounded))
                     .fontWeight(.black)
+                    .foregroundColor(.white)
                     .textCase(.uppercase)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(color)
-            .foregroundColor(.white)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -476,14 +545,6 @@ struct MangaGradeButton: View {
             .shadow(color: .black.opacity(0.4), radius: 8, y: 4)
         }
         .buttonStyle(MangaButtonStyle())
-    }
-}
-
-struct MangaButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: configuration.isPressed)
     }
 }
 
@@ -579,6 +640,138 @@ struct MangaActionButton: View {
             .shadow(color: .black.opacity(0.5), radius: 10, y: 5)
         }
         .buttonStyle(MangaButtonStyle())
+    }
+}
+
+struct StarburstEffect: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        ZStack {
+            ForEach(0..<16) { i in
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.yellow.opacity(0.8),
+                                Color.orange.opacity(0.4),
+                                Color.clear
+                            ],
+                            startPoint: .center,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: 150, height: 8)
+                    .offset(x: 75)
+                    .rotationEffect(.degrees(Double(i) * 22.5))
+                    .rotationEffect(.degrees(isAnimating ? 360 : 0))
+            }
+            
+            Circle()
+                .stroke(Color.yellow, lineWidth: 6)
+                .frame(width: 100, height: 100)
+                .scaleEffect(isAnimating ? 1.5 : 0.5)
+                .opacity(isAnimating ? 0 : 1)
+            
+            Circle()
+                .stroke(Color.orange, lineWidth: 4)
+                .frame(width: 80, height: 80)
+                .scaleEffect(isAnimating ? 1.3 : 0.7)
+                .opacity(isAnimating ? 0 : 1)
+        }
+        .onAppear {
+            withAnimation(
+                .easeOut(duration: 1.5)
+            ) {
+                isAnimating = true
+            }
+        }
+    }
+}
+
+enum SoundEffectType {
+    case swoosh
+    case correct
+    case good
+    case oops
+    
+    var text: String {
+        switch self {
+        case .swoosh: return "SWOOSH!"
+        case .correct: return "CORRECT!"
+        case .good: return "GOOD!"
+        case .oops: return "OOPS!"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .swoosh: return .blue
+        case .correct: return .green
+        case .good: return .orange
+        case .oops: return .red
+        }
+    }
+}
+
+struct SoundEffectText: View {
+    let type: SoundEffectType
+    @State private var scale: CGFloat = 0.3
+    @State private var rotation: Double = -10
+    @State private var opacity: Double = 1.0
+    
+    var body: some View {
+        ZStack {
+            // Multiple shadow layers for glow effect
+            Text(type.text)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .foregroundColor(type.color)
+                .blur(radius: 20)
+                .opacity(0.8)
+            
+            Text(type.text)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .foregroundColor(type.color)
+                .blur(radius: 10)
+                .opacity(0.6)
+            
+            // Black outline/shadow (thicker)
+            Text(type.text)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .foregroundColor(.black)
+                .offset(x: 6, y: 6)
+            
+            // White stroke
+            Text(type.text)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .foregroundColor(.white)
+                .shadow(color: .black, radius: 3)
+            
+            // Main colored text
+            Text(type.text)
+                .font(.system(size: 80, weight: .black, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [type.color, type.color.opacity(0.6)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
+        .rotationEffect(.degrees(rotation))
+        .scaleEffect(scale)
+        .opacity(opacity)
+        .onAppear {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) {
+                scale = 1.2
+                rotation = 10
+            }
+            
+            // Fade out animation
+            withAnimation(.easeOut(duration: 0.6).delay(0.2)) {
+                opacity = 0
+            }
+        }
     }
 }
 

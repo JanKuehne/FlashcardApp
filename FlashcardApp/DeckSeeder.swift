@@ -47,74 +47,74 @@ class DeckSeeder {
     private static func createDemoCards(deckId: UUID) -> [Flashcard] {
         var cards: [Flashcard] = []
         
-        // TIERE (Animals) - 10 cards
+        // TIERE (Animals) - 10 cards - Examples in ENGLISH (the foreign language)
         let animals = [
-            ("der Hund", "the dog", "Der Hund bellt laut."),
-            ("die Katze", "the cat", "Die Katze ist sehr süß."),
-            ("der Vogel", "the bird", "Der Vogel fliegt hoch."),
-            ("der Fisch", "the fish", "Der Fisch schwimmt im Wasser."),
-            ("das Pferd", "the horse", "Das Pferd läuft schnell."),
-            ("die Maus", "the mouse", "Die Maus ist klein."),
-            ("der Elefant", "the elephant", "Der Elefant ist groß."),
-            ("die Kuh", "the cow", "Die Kuh gibt Milch."),
-            ("das Schwein", "the pig", "Das Schwein ist rosa."),
-            ("der Löwe", "the lion", "Der Löwe ist stark.")
+            ("der Hund", "the dog", "The dog barks loudly."),
+            ("die Katze", "the cat", "The cat is very cute."),
+            ("der Vogel", "the bird", "The bird flies high."),
+            ("der Fisch", "the fish", "The fish swims in water."),
+            ("das Pferd", "the horse", "The horse runs fast."),
+            ("die Maus", "the mouse", "The mouse is small."),
+            ("der Elefant", "the elephant", "The elephant is big."),
+            ("die Kuh", "the cow", "The cow gives milk."),
+            ("das Schwein", "the pig", "The pig is pink."),
+            ("der Löwe", "the lion", "The lion is strong.")
         ]
         
-        // FARBEN (Colors) - 10 cards
+        // FARBEN (Colors) - 10 cards - Examples in ENGLISH
         let colors = [
-            ("rot", "red", "Das Auto ist rot."),
-            ("blau", "blue", "Der Himmel ist blau."),
-            ("grün", "green", "Das Gras ist grün."),
-            ("gelb", "yellow", "Die Sonne ist gelb."),
-            ("schwarz", "black", "Die Nacht ist schwarz."),
-            ("weiß", "white", "Der Schnee ist weiß."),
-            ("braun", "brown", "Der Baum ist braun."),
-            ("orange", "orange", "Die Orange ist orange."),
-            ("rosa", "pink", "Die Blume ist rosa."),
-            ("lila", "purple", "Die Pflaume ist lila.")
+            ("rot", "red", "The car is red."),
+            ("blau", "blue", "The sky is blue."),
+            ("grün", "green", "The grass is green."),
+            ("gelb", "yellow", "The sun is yellow."),
+            ("schwarz", "black", "The night is black."),
+            ("weiß", "white", "The snow is white."),
+            ("braun", "brown", "The tree is brown."),
+            ("orange", "orange", "The orange is orange."),
+            ("rosa", "pink", "The flower is pink."),
+            ("lila", "purple", "The plum is purple.")
         ]
         
-        // ZAHLEN (Numbers) - 10 cards
+        // ZAHLEN (Numbers) - 10 cards - Examples in ENGLISH
         let numbers = [
-            ("eins", "one", "Ich habe einen Apfel."),
-            ("zwei", "two", "Ich habe zwei Brüder."),
-            ("drei", "three", "Drei Äpfel sind auf dem Tisch."),
-            ("vier", "four", "Vier Jahreszeiten gibt es."),
-            ("fünf", "five", "Ich habe fünf Finger."),
-            ("sechs", "six", "Sechs Eier sind im Karton."),
-            ("sieben", "seven", "Sieben Tage hat die Woche."),
-            ("acht", "eight", "Acht Beine hat die Spinne."),
-            ("neun", "nine", "Neun Planeten gibt es."),
-            ("zehn", "ten", "Zehn Finger habe ich.")
+            ("eins", "one", "I have one apple."),
+            ("zwei", "two", "I have two brothers."),
+            ("drei", "three", "Three apples are on the table."),
+            ("vier", "four", "There are four seasons."),
+            ("fünf", "five", "I have five fingers."),
+            ("sechs", "six", "Six eggs are in the carton."),
+            ("sieben", "seven", "The week has seven days."),
+            ("acht", "eight", "The spider has eight legs."),
+            ("neun", "nine", "There are nine planets."),
+            ("zehn", "ten", "I have ten fingers.")
         ]
         
-        // FAMILIE (Family) - 10 cards
+        // FAMILIE (Family) - 10 cards - Examples in ENGLISH
         let family = [
-            ("die Mutter", "the mother", "Meine Mutter ist nett."),
-            ("der Vater", "the father", "Mein Vater arbeitet."),
-            ("der Bruder", "the brother", "Mein Bruder spielt Fußball."),
-            ("die Schwester", "the sister", "Meine Schwester liest gern."),
-            ("die Oma", "the grandmother", "Meine Oma backt Kuchen."),
-            ("der Opa", "the grandfather", "Mein Opa erzählt Geschichten."),
-            ("das Kind", "the child", "Das Kind spielt im Garten."),
-            ("der Sohn", "the son", "Der Sohn ist jung."),
-            ("die Tochter", "the daughter", "Die Tochter singt schön."),
-            ("die Eltern", "the parents", "Meine Eltern sind lieb.")
+            ("die Mutter", "the mother", "My mother is nice."),
+            ("der Vater", "the father", "My father works."),
+            ("der Bruder", "the brother", "My brother plays football."),
+            ("die Schwester", "the sister", "My sister likes reading."),
+            ("die Oma", "the grandmother", "My grandma bakes cakes."),
+            ("der Opa", "the grandfather", "My grandpa tells stories."),
+            ("das Kind", "the child", "The child plays in the garden."),
+            ("der Sohn", "the son", "The son is young."),
+            ("die Tochter", "the daughter", "The daughter sings beautifully."),
+            ("die Eltern", "the parents", "My parents are kind.")
         ]
         
-        // ESSEN (Food) - 10 cards
+        // ESSEN (Food) - 10 cards - Examples in ENGLISH
         let food = [
-            ("das Brot", "the bread", "Ich esse Brot zum Frühstück."),
-            ("das Wasser", "the water", "Wasser ist gesund."),
-            ("die Milch", "the milk", "Die Milch ist weiß."),
-            ("der Apfel", "the apple", "Der Apfel ist rot."),
-            ("die Banane", "the banana", "Die Banane ist gelb."),
-            ("der Käse", "the cheese", "Der Käse schmeckt gut."),
-            ("das Ei", "the egg", "Das Ei ist zum Frühstück."),
-            ("der Fisch", "the fish", "Der Fisch schwimmt im Meer."),
-            ("das Fleisch", "the meat", "Das Fleisch ist auf dem Teller."),
-            ("der Kuchen", "the cake", "Der Kuchen ist süß.")
+            ("das Brot", "the bread", "I eat bread for breakfast."),
+            ("das Wasser", "the water", "Water is healthy."),
+            ("die Milch", "the milk", "The milk is white."),
+            ("der Apfel", "the apple", "The apple is red."),
+            ("die Banane", "the banana", "The banana is yellow."),
+            ("der Käse", "the cheese", "The cheese tastes good."),
+            ("das Ei", "the egg", "The egg is for breakfast."),
+            ("der Fisch", "the fish", "The fish swims in the sea."),
+            ("das Fleisch", "the meat", "The meat is on the plate."),
+            ("der Kuchen", "the cake", "The cake is sweet.")
         ]
         
         // Combine all categories

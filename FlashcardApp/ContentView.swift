@@ -2,7 +2,7 @@
 //  ContentView.swift
 //  FlashcardApp
 //
-//  Created by Jan Kühne on 12.11.25.
+//  Created by Jan Kühne on 10.11.25.
 //
 
 import SwiftUI
@@ -12,8 +12,11 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var userProgress: [UserProgress]
     @Query private var decks: [Deck]
+    @Query private var flashcards: [Flashcard]
     
     @State private var showReviewSession = false
+    @State private var showAddCard = false
+    @State private var showSettings = false
     @State private var cardsCompletedToday = 0
     @State private var showCelebration = false
     
@@ -24,18 +27,19 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Dark background
                 Color.black.ignoresSafeArea()
                 
-                // Manga character backdrop (silhouettes)
+                HalftonePattern()
+                    .opacity(0.03)
+                    .allowsHitTesting(false)
+                
                 MangaBackdrop()
-                    .opacity(0.15)
+                    .opacity(0.3)
+                    .allowsHitTesting(false)
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Top stats cards
                         HStack(spacing: 16) {
-                            // Streak card
                             MangaStatCard(
                                 topLabel: "日",
                                 mainValue: "\(progress.currentStreak)",
@@ -44,7 +48,6 @@ struct ContentView: View {
                                 gradient: [Color.orange, Color.red]
                             )
                             
-                            // Level card
                             MangaStatCard(
                                 topLabel: "Lv",
                                 mainValue: "\(currentLevel)",
@@ -56,7 +59,6 @@ struct ContentView: View {
                         .padding(.horizontal)
                         .padding(.top, 20)
                         
-                        // XP Progress bar
                         VStack(alignment: .leading, spacing: 12) {
                             HStack {
                                 Text("LEVEL \(currentLevel + 1)")
@@ -107,7 +109,6 @@ struct ContentView: View {
                         )
                         .padding(.horizontal)
                         
-                        // Daily Goal section
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("今日")
@@ -185,12 +186,17 @@ struct ContentView: View {
                         )
                         .padding(.horizontal)
                         
-                        // Stats section
                         HStack(spacing: 16) {
                             MangaStatBox(
                                 value: "\(progress.totalCardsReviewed)",
                                 label: "GELERNT",
                                 color: .blue
+                            )
+                            
+                            MangaStatBox(
+                                value: "\(flashcards.count)",
+                                label: "KARTEN",
+                                color: .purple
                             )
                             
                             MangaStatBox(
@@ -204,7 +210,6 @@ struct ContentView: View {
                         Spacer()
                             .frame(height: 40)
                         
-                        // Main action button
                         Button(action: {
                             showReviewSession = true
                         }) {
@@ -242,29 +247,60 @@ struct ContentView: View {
                         }
                         .padding(.horizontal, 24)
                         .padding(.bottom, 40)
-                        .overlay(
-                            Group {
-                                if showCelebration {
-                                    VStack {
-                                        Text("🎉")
-                                            .font(.system(size: 100))
-                                            .scaleEffect(showCelebration ? 1.0 : 0.1)
-                                            .opacity(showCelebration ? 0 : 1)
-                                    }
-                                }
-                            }
-                            .animation(.spring(response: 0.6, dampingFraction: 0.6), value: showCelebration)
-                        )
                     }
+                }
+                .overlay(alignment: .topTrailing) {
+                    ChibiMascot(
+                        level: currentLevel,
+                        streak: progress.currentStreak,
+                        goalComplete: cardsCompletedToday >= progress.dailyGoal
+                    )
+                    .frame(width: 80, height: 80)
+                    .padding(.top, 20)
+                    .padding(.trailing, 20)
+                    .allowsHitTesting(false)
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        showSettings = true
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+                
                 ToolbarItem(placement: .principal) {
                     Text("DASHBOARD")
                         .font(.system(.headline, design: .rounded))
                         .fontWeight(.black)
                         .foregroundColor(.white)
+                }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showAddCard = true
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue, Color.purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            
+                            Image(systemName: "plus")
+                                .font(.system(size: 18, weight: .black))
+                                .foregroundColor(.white)
+                        }
+                        .shadow(color: .blue.opacity(0.5), radius: 8, y: 4)
+                    }
                 }
             }
             .sheet(isPresented: $showReviewSession, onDismiss: {
@@ -281,6 +317,12 @@ struct ContentView: View {
                 }
             }) {
                 ReviewSessionView()
+            }
+            .sheet(isPresented: $showAddCard) {
+                AddCardView()
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
             .task {
                 updateCardsCompletedToday()
@@ -415,6 +457,7 @@ struct MangaBackdrop: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
+                // Geometric manga panels for depth
                 Path { path in
                     path.move(to: CGPoint(x: -50, y: geometry.size.height * 0.3))
                     path.addLine(to: CGPoint(x: 100, y: geometry.size.height * 0.2))
@@ -446,8 +489,98 @@ struct MangaBackdrop: View {
                         endPoint: .bottom
                     )
                 )
+                
+                // MANGA CHARACTER PNG IMAGES
+                
+                // Hero action character - Left side
+                Image("hero_action_blue")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 180, height: 180)
+                    .opacity(0.8)
+                    .position(x: 90, y: geometry.size.height * 0.5)
+                
+                // Ninja character - Right side
+                Image("ninja_side_purple")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 160, height: 160)
+                    .opacity(0.8)
+                    .position(x: geometry.size.width - 80, y: geometry.size.height * 0.6)
+                
+                // Fox mascot - Bottom left
+                Image("fox_mascot_orange")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 120, height: 120)
+                    .opacity(0.8)
+                    .position(x: 100, y: geometry.size.height - 100)
+                
+                // Victory power character - Top right
+                Image("victory_power_red")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 150, height: 150)
+                    .opacity(0.8)
+                    .position(x: geometry.size.width - 70, y: 180)
             }
         }
+    }
+}
+
+struct ChibiMascot: View {
+    let level: Int
+    let streak: Int
+    let goalComplete: Bool
+    
+    var expression: String {
+        if goalComplete {
+            return "😎"
+        } else if streak >= 7 {
+            return "🔥"
+        } else if streak >= 3 {
+            return "😊"
+        } else {
+            return "💪"
+        }
+    }
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.blue, Color.purple],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .overlay(
+                    Circle()
+                        .stroke(Color.white, lineWidth: 3)
+                )
+            
+            VStack(spacing: 2) {
+                Text(expression)
+                    .font(.system(size: 32))
+                
+                Text("Lv\(level)")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(8)
+            }
+            
+            if level >= 5 {
+                Circle()
+                    .stroke(Color.yellow, lineWidth: 2)
+                    .scaleEffect(1.1)
+                    .opacity(0.6)
+            }
+        }
+        .shadow(color: .blue.opacity(0.5), radius: 10)
     }
 }
 
