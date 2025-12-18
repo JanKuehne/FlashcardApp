@@ -33,13 +33,16 @@ class LLMService {
     /// Generate ONLY an example sentence for a vocabulary pair
     /// - Parameters:
     ///   - germanWord: The German word (native language)
-    ///   - englishWord: The English word (foreign language being learned)
-    /// - Returns: Example sentence in ENGLISH (the foreign language), or nil if failed
-    func generateExample(germanWord: String, englishWord: String) async throws -> String? {
+    ///   - targetWord: The target language word (English/Spanish)
+    ///   - targetLanguage: Language code ("en" or "es")
+    /// - Returns: Example sentence in target language, or nil if failed
+    func generateExample(germanWord: String, targetWord: String, targetLanguage: String = "en") async throws -> String? {
+        
+        let languageName = targetLanguage == "es" ? "Spanish" : "English"
         
         // Optimized prompt: short, clear, minimal tokens
         let prompt = """
-        Create a simple English sentence using "\(englishWord)" for an 8-year-old German learner. Max 8 words, A1 level.
+        Create a simple \(languageName) sentence using "\(targetWord)" for an 8-year-old German learner. Max 8 words, A1 level.
         
         JSON only:
         {"example": "Your sentence here"}
@@ -219,6 +222,13 @@ enum LLMError: LocalizedError {
     }
 }
 
+// MARK: - OpenAI Service for Production
+
+class OpenAIService: LLMService {
+    // Inherits all functionality from LLMService
+    // This is the production implementation using the actual OpenAI API
+}
+
 // MARK: - Mock Service for Testing
 
 class MockLLMService: LLMService {
@@ -226,30 +236,53 @@ class MockLLMService: LLMService {
         super.init(apiKey: "mock")
     }
     
-    override func generateExample(germanWord: String, englishWord: String) async throws -> String? {
+    override func generateExample(germanWord: String, targetWord: String, targetLanguage: String = "en") async throws -> String? {
         // Simulate network delay
         try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
         
-        // Mock examples in ENGLISH (the foreign language being learned)
-        let mockExamples: [String: String] = [
-            "Sonne": "The sun shines brightly.",
-            "Mond": "The moon is round.",
-            "Stern": "The star twinkles beautifully.",
-            "Apfel": "The apple is red.",
-            "Hund": "The dog barks loudly.",
-            "Katze": "The cat sleeps quietly.",
-            "Haus": "The house is big.",
-            "Baum": "The tree is old.",
-            "Blume": "The flower blooms colorfully.",
-            "Auto": "The car drives fast."
-        ]
+        // Select appropriate mock examples based on target language
+        let mockExamples: [String: String]
+        
+        if targetLanguage == "es" {
+            // Spanish mock examples (10 words, A1 level)
+            mockExamples = [
+                "Sonne": "El sol brilla.",
+                "Mond": "La luna es redonda.",
+                "Apfel": "La manzana es roja.",
+                "Hund": "El perro ladra.",
+                "Katze": "El gato duerme.",
+                "Haus": "La casa es grande.",
+                "Baum": "El árbol es viejo.",
+                "Blume": "La flor es bonita.",
+                "Auto": "El coche es rápido.",
+                "Buch": "El libro es interesante."
+            ]
+        } else {
+            // English mock examples (10 words, A1 level)
+            mockExamples = [
+                "Sonne": "The sun shines brightly.",
+                "Mond": "The moon is round.",
+                "Apfel": "The apple is red.",
+                "Hund": "The dog barks loudly.",
+                "Katze": "The cat sleeps quietly.",
+                "Haus": "The house is big.",
+                "Baum": "The tree is old.",
+                "Blume": "The flower blooms.",
+                "Auto": "The car drives fast.",
+                "Buch": "The book is interesting."
+            ]
+        }
         
         if let example = mockExamples[germanWord] {
             return example
         }
         
-        // Fallback for unknown words - generate simple English example
-        return "The \(englishWord) is nice."
+        // Fallback for unknown words - generate simple example in target language
+        if targetLanguage == "es" {
+            return "El/La \(targetWord) es bonito/a."
+        } else {
+            return "The \(targetWord) is nice."
+        }
     }
     
     override func enrichCard(germanWord: String, targetLanguage: String = "English") async throws -> CardEnrichment? {

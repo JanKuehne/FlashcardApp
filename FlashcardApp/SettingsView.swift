@@ -16,6 +16,8 @@ struct SettingsView: View {
     @State private var useMockLLM: Bool = false
     @State private var showingAPIKeyInfo = false
     @State private var dailyGoal: Int = 20
+    @State private var userName: String = ""
+    @State private var showAchievements = false
     
     private let settings = AppSettings.shared
     
@@ -33,6 +35,36 @@ struct SettingsView: View {
                     .allowsHitTesting(false)
                 
                 Form {
+                    // User Profile Section
+                    Section {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("DEIN NAME")
+                                    .font(.system(.headline, design: .rounded))
+                                    .fontWeight(.black)
+                                    .foregroundColor(.purple)
+                                
+                                Spacer()
+                            }
+                            
+                            TextField("z.B. Henri", text: $userName)
+                                .font(.system(.title3, design: .rounded))
+                                .fontWeight(.semibold)
+                                .textInputAutocapitalization(.words)
+                                .padding()
+                                .background(Color.white.opacity(0.05))
+                                .cornerRadius(8)
+                            
+                            Text("Dein Name wird in Erfolgsmeldungen verwendet, z.B. \"Gut gemacht, Henri!\"")
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                        }
+                        .padding(.vertical, 8)
+                    } header: {
+                        Text("PROFIL")
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
                     // Daily Goal Section
                     Section {
                         VStack(alignment: .leading, spacing: 12) {
@@ -43,18 +75,21 @@ struct SettingsView: View {
                                     .foregroundColor(.blue)
                                 
                                 Spacer()
-                                
-                                Text("\(dailyGoal) Karten")
-                                    .font(.system(.title3, design: .rounded))
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.white)
                             }
                             
-                            Slider(value: Binding(
-                                get: { Double(dailyGoal) },
-                                set: { dailyGoal = Int($0) }
-                            ), in: 5...50, step: 5)
-                            .tint(.blue)
+                            HStack {
+                                Slider(value: Binding(
+                                    get: { Double(dailyGoal) },
+                                    set: { dailyGoal = Int($0) }
+                                ), in: 5...50, step: 5)
+                                .tint(.blue)
+                                
+                                Text("\(dailyGoal)")
+                                    .font(.system(.title2, design: .rounded))
+                                    .fontWeight(.black)
+                                    .foregroundColor(.white)
+                                    .frame(minWidth: 50)
+                            }
                             
                             Text("Wie viele Karten möchtest du täglich lernen?")
                                 .font(.caption)
@@ -131,6 +166,50 @@ struct SettingsView: View {
                             .foregroundColor(.white.opacity(0.7))
                     }
                     
+                    // Achievements Section
+                    Section {
+                        Button(action: {
+                            showAchievements = true
+                        }) {
+                            HStack {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.yellow, Color.orange],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Text("🏆")
+                                        .font(.system(size: 28))
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("ACHIEVEMENTS")
+                                        .font(.system(.headline, design: .rounded))
+                                        .fontWeight(.black)
+                                        .foregroundColor(.white)
+                                    
+                                    Text("Zeige deine Erfolge")
+                                        .font(.caption)
+                                        .foregroundColor(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.gray)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    } header: {
+                        Text("ERFOLGE")
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                    
                     // Stats Section
                     Section {
                         VStack(alignment: .leading, spacing: 12) {
@@ -185,6 +264,9 @@ struct SettingsView: View {
             .sheet(isPresented: $showingAPIKeyInfo) {
                 APIKeyInfoView()
             }
+            .sheet(isPresented: $showAchievements) {
+                AchievementsView()
+            }
             .onAppear {
                 loadSettings()
             }
@@ -201,11 +283,13 @@ struct SettingsView: View {
         apiKey = settings.openAIAPIKey
         useMockLLM = settings.useMockLLM
         dailyGoal = progress.dailyGoal
+        userName = settings.userName
     }
     
     func saveSettings() {
         settings.openAIAPIKey = apiKey
         settings.useMockLLM = useMockLLM
+        settings.userName = userName
         progress.dailyGoal = dailyGoal
     }
 }

@@ -17,6 +17,63 @@ class AppSettings {
     
     // MARK: - Properties
     
+    /// User's name for personalized messages
+    var userName: String {
+        get {
+            UserDefaults.standard.string(forKey: "userName") ?? ""
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "userName")
+        }
+    }
+    
+    /// Last selected target language (for AddCardView)
+    var lastTargetLanguage: String {
+        get {
+            UserDefaults.standard.string(forKey: "lastTargetLanguage") ?? "en"
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "lastTargetLanguage")
+        }
+    }
+    
+    // MARK: - Language Helpers
+    
+    /// Available target languages
+    let availableLanguages = ["en", "es"]
+    
+    /// Get flag emoji for language code
+    func languageFlag(_ code: String) -> String {
+        switch code {
+        case "es": return "🇪🇸"
+        case "en": return "🇬🇧"
+        default: return "🇬🇧"
+        }
+    }
+    
+    /// Get language name
+    func languageName(_ code: String) -> String {
+        switch code {
+        case "es": return "Español"
+        case "en": return "English"
+        default: return "English"
+        }
+    }
+    
+    /// Get success message in target language
+    func successMessage(for language: String, userName: String) -> String {
+        let name = userName.isEmpty ? "" : ", \(userName.uppercased())"
+        
+        switch language {
+        case "es":
+            return "¡MUY BIEN\(name)!"
+        case "en":
+            return "WELL DONE\(name)!"
+        default:
+            return "WELL DONE\(name)!"
+        }
+    }
+    
     /// OpenAI API Key (stored in UserDefaults)
     var openAIAPIKey: String {
         get {

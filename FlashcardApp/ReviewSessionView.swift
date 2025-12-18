@@ -14,6 +14,8 @@ struct ReviewSessionView: View {
     @Query private var decks: [Deck]
     @Query private var userProgress: [UserProgress]
     
+    let selectedDeck: Deck  // Pass in the deck to review
+    
     @State private var cards: [Flashcard] = []
     @State private var currentIndex = 0
     @State private var isFlipped = false
@@ -21,6 +23,16 @@ struct ReviewSessionView: View {
     @State private var correctCount = 0
     @State private var showImpact = false
     @State private var soundEffect: SoundEffectType? = nil
+    
+    // Get user's name for personalized messages
+    private var userName: String {
+        AppSettings.shared.userName
+    }
+    
+    // Get success message based on deck language
+    private var successMessage: String {
+        AppSettings.shared.successMessage(for: selectedDeck.targetLanguage, userName: userName)
+    }
     
     var dailyGoal: Int {
         userProgress.first?.dailyGoal ?? 20
@@ -61,6 +73,12 @@ struct ReviewSessionView: View {
                         .background(Color.red.opacity(0.8))
                         .clipShape(Circle())
                 }
+                
+                Spacer()
+                
+                // Show language flag
+                Text(selectedDeck.languageFlag)
+                    .font(.system(size: 32))
                 
                 Spacer()
                 
@@ -136,22 +154,23 @@ struct ReviewSessionView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: 450)
                 .padding(.horizontal, 24)
-                .onTapGesture {
-                    UIImpactFeedbackGenerator(style: .medium).impactOccurred()
-                    
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        soundEffect = .swoosh
+            }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    soundEffect = .swoosh
+                }
+                
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    withAnimation {
+                        soundEffect = nil
                     }
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                        withAnimation {
-                            soundEffect = nil
-                        }
-                    }
-                    
-                    withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                        isFlipped.toggle()
-                    }
+                }
+                
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    isFlipped.toggle()
                 }
             }
             
@@ -229,7 +248,8 @@ struct ReviewSessionView: View {
                                 )
                         }
                         
-                        Text("GUT GEMACHT!")
+                        // Language-specific success message
+                        Text(successMessage)
                             .font(.system(size: 28, weight: .black, design: .rounded))
                             .foregroundColor(.white)
                             .shadow(color: .blue, radius: 8)
@@ -311,15 +331,13 @@ struct ReviewSessionView: View {
     }
     
     func loadReviewCards() {
-        guard let deck = decks.first else { return }
-        
         let descriptor = FetchDescriptor<Flashcard>(
             sortBy: [SortDescriptor(\.createdDate)]
         )
         
         if let fetchedCards = try? modelContext.fetch(descriptor) {
             cards = fetchedCards
-                .filter { $0.deckId == deck.id }
+                .filter { $0.deckId == selectedDeck.id }
                 .prefix(dailyGoal)
                 .map { $0 }
         }
@@ -782,6 +800,14 @@ enum ReviewGrade {
 }
 
 #Preview {
-    ReviewSessionView()
-        .modelContainer(for: [Flashcard.self, Deck.self])
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Flashcard.self, Deck.self, configurations: config)
+    let context = container.mainContext
+    
+    // Create a sample deck for preview
+    let deck = Deck(name: "English", description: "Demo Deck", targetLanguage: "en")
+    context.insert(deck)
+    
+    return ReviewSessionView(selectedDeck: deck)
+        .modelContainer(container)
 }

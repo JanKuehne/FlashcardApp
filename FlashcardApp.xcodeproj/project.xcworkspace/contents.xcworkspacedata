@@ -5,15 +5,24 @@
       location = "self:">
    </FileRef>
    <FileRef
-      location = "group:README.md">
+      location = "group:AppSettings.swift">
    </FileRef>
    <FileRef
-      location = "group:GIT_COMMIT_GUIDE.md">
+      location = "group:HalftonePattern.swift">
    </FileRef>
    <FileRef
-      location = "group:quick-commit.sh">
+      location = "group:ReviewSession.swift">
    </FileRef>
    <FileRef
-      location = "group:COMMIT_CHECKLIST.md">
+      location = "group:Achievement.swift">
+   </FileRef>
+   <FileRef
+      location = "group:FlashcardApp.swift">
+   </FileRef>
+   <FileRef
+      location = "group:AchievementsView.swift">
+   </FileRef>
+   <FileRef
+      location = "group:BUILD_FIXES_SUMMARY.md">
    </FileRef>
 </Workspace>

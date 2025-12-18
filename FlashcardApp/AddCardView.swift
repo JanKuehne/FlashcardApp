@@ -14,17 +14,36 @@ struct AddCardView: View {
     @Query private var decks: [Deck]
     
     @State private var germanWord = ""
-    @State private var englishWord = ""
+    @State private var targetWord = ""
     @State private var exampleSentence = ""
     @State private var showSuccess = false
     @State private var cardsSaved = 0
     @State private var isLoadingAI = false
     @State private var aiErrorMessage: String?
+    @State private var targetLanguage: String = AppSettings.shared.lastTargetLanguage
     
     @FocusState private var focusedField: Field?
     
     enum Field {
-        case german, english, example
+        case german, target, example
+    }
+    
+    // Computed properties for dynamic UI
+    var targetLanguageLabel: String {
+        "\(AppSettings.shared.languageFlag(targetLanguage)) \(AppSettings.shared.languageName(targetLanguage).uppercased())"
+    }
+    
+    var targetPlaceholder: String {
+        targetLanguage == "es" ? "p.ej. sol" : "e.g. sun"
+    }
+    
+    var exampleLabel: String {
+        let langName = AppSettings.shared.languageName(targetLanguage)
+        return "📝 BEISPIEL IN \(langName.uppercased()) (Optional)"
+    }
+    
+    var examplePlaceholder: String {
+        targetLanguage == "es" ? "El sol brilla." : "The sun shines brightly."
     }
     
     var body: some View {
@@ -59,6 +78,86 @@ struct AddCardView: View {
                         }
                         .padding(.top, 20)
                         
+                        // Language Picker - Prominent Design
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("ZIELSPRACHE WÄHLEN")
+                                .font(.system(.headline, design: .rounded))
+                                .fontWeight(.black)
+                                .foregroundColor(.orange)
+                                .padding(.leading, 4)
+                            
+                            HStack(spacing: 12) {
+                                // English Button
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        targetLanguage = "en"
+                                        AppSettings.shared.lastTargetLanguage = "en"
+                                        targetWord = ""
+                                        exampleSentence = ""
+                                        aiErrorMessage = nil
+                                    }
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Text("🇬🇧")
+                                            .font(.system(size: 32))
+                                        Text("English")
+                                            .font(.system(.body, design: .rounded))
+                                            .fontWeight(.bold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(
+                                        targetLanguage == "en" 
+                                        ? LinearGradient(colors: [.green, .green.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+                                        : LinearGradient(colors: [.white.opacity(0.1), .white.opacity(0.05)], startPoint: .top, endPoint: .bottom)
+                                    )
+                                    .foregroundColor(targetLanguage == "en" ? .white : .white.opacity(0.6))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(targetLanguage == "en" ? Color.green : Color.white.opacity(0.2), lineWidth: targetLanguage == "en" ? 3 : 2)
+                                    )
+                                    .shadow(color: targetLanguage == "en" ? .green.opacity(0.5) : .clear, radius: 8)
+                                }
+                                
+                                // Spanish Button
+                                Button(action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        targetLanguage = "es"
+                                        AppSettings.shared.lastTargetLanguage = "es"
+                                        targetWord = ""
+                                        exampleSentence = ""
+                                        aiErrorMessage = nil
+                                    }
+                                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                                }) {
+                                    HStack(spacing: 8) {
+                                        Text("🇪🇸")
+                                            .font(.system(size: 32))
+                                        Text("Español")
+                                            .font(.system(.body, design: .rounded))
+                                            .fontWeight(.bold)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(
+                                        targetLanguage == "es" 
+                                        ? LinearGradient(colors: [.orange, .orange.opacity(0.7)], startPoint: .top, endPoint: .bottom)
+                                        : LinearGradient(colors: [.white.opacity(0.1), .white.opacity(0.05)], startPoint: .top, endPoint: .bottom)
+                                    )
+                                    .foregroundColor(targetLanguage == "es" ? .white : .white.opacity(0.6))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(targetLanguage == "es" ? Color.orange : Color.white.opacity(0.2), lineWidth: targetLanguage == "es" ? 3 : 2)
+                                    )
+                                    .shadow(color: targetLanguage == "es" ? .orange.opacity(0.5) : .clear, radius: 8)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        
                         // German Word Input
                         MangaInputField(
                             title: "🇩🇪 DEUTSCH",
@@ -69,22 +168,22 @@ struct AddCardView: View {
                             field: .german
                         )
                         .onSubmit {
-                            focusedField = .english
+                            focusedField = .target
                         }
                         
-                        // English Word Input
+                        // Target Language Word Input (Dynamic based on selection)
                         MangaInputField(
-                            title: "🇬🇧 ENGLISH",
-                            placeholder: "e.g. sun",
-                            text: $englishWord,
-                            color: .green,
+                            title: targetLanguageLabel,
+                            placeholder: targetPlaceholder,
+                            text: $targetWord,
+                            color: targetLanguage == "es" ? .orange : .green,
                             focused: $focusedField,
-                            field: .english
+                            field: .target
                         )
                         .onSubmit {
                             focusedField = .example
                         }
-                        .onChange(of: englishWord) { oldValue, newValue in
+                        .onChange(of: targetWord) { oldValue, newValue in
                             // Clear error when user starts typing
                             if !newValue.isEmpty && aiErrorMessage != nil {
                                 aiErrorMessage = nil
@@ -181,10 +280,10 @@ struct AddCardView: View {
                             .transition(.move(edge: .top).combined(with: .opacity))
                         }
                         
-                        // Example Sentence Input (Optional) - in English
+                        // Example Sentence Input (Optional) - dynamic language
                         MangaInputField(
-                            title: "📝 BEISPIEL IN ENGLISH (Optional)",
-                            placeholder: "The sun shines brightly",
+                            title: exampleLabel,
+                            placeholder: examplePlaceholder,
                             text: $exampleSentence,
                             color: .purple,
                             focused: $focusedField,
@@ -197,7 +296,7 @@ struct AddCardView: View {
                             }
                         }
                         
-                        // Info box
+                        // Info box - dynamic based on language
                         HStack(spacing: 12) {
                             Image(systemName: "lightbulb.fill")
                                 .font(.title2)
@@ -209,7 +308,7 @@ struct AddCardView: View {
                                     .fontWeight(.black)
                                     .foregroundColor(.yellow)
                                 
-                                Text("Nutze die AI 🪄 für englische Beispielsätze!")
+                                Text("Nutze die AI 🪄 für \(targetLanguage == "es" ? "spanische" : "englische") Beispielsätze!")
                                     .font(.system(.caption, design: .rounded))
                                     .fontWeight(.semibold)
                                     .foregroundColor(.white.opacity(0.8))
@@ -351,12 +450,12 @@ struct AddCardView: View {
     
     var canSave: Bool {
         !germanWord.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !englishWord.trimmingCharacters(in: .whitespaces).isEmpty
+        !targetWord.trimmingCharacters(in: .whitespaces).isEmpty
     }
     
     var canUseAI: Bool {
         !germanWord.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !englishWord.trimmingCharacters(in: .whitespaces).isEmpty &&
+        !targetWord.trimmingCharacters(in: .whitespaces).isEmpty &&
         !isLoadingAI
     }
     
@@ -381,7 +480,8 @@ struct AddCardView: View {
                 
                 if let example = try await llmService.generateExample(
                     germanWord: germanWord.trimmingCharacters(in: .whitespaces),
-                    englishWord: englishWord.trimmingCharacters(in: .whitespaces)
+                    targetWord: targetWord.trimmingCharacters(in: .whitespaces),
+                    targetLanguage: targetLanguage
                 ) {
                     await MainActor.run {
                         // Animate the fill
@@ -418,11 +518,14 @@ struct AddCardView: View {
     // MARK: - Card Saving
     
     func saveCard() {
-        guard canSave, let deck = decks.first else { return }
+        // Find or create deck for this language
+        let deck = decks.first { $0.targetLanguage == targetLanguage } ?? createDeckForLanguage()
+        
+        guard let deck = deck else { return }
         
         let card = Flashcard(
             front: germanWord.trimmingCharacters(in: .whitespaces),
-            back: englishWord.trimmingCharacters(in: .whitespaces),
+            back: targetWord.trimmingCharacters(in: .whitespaces),
             deckId: deck.id,
             exampleSentence: exampleSentence.trimmingCharacters(in: .whitespaces).isEmpty ? nil : exampleSentence.trimmingCharacters(in: .whitespaces)
         )
@@ -453,13 +556,31 @@ struct AddCardView: View {
         }
     }
     
+    func createDeckForLanguage() -> Deck? {
+        let languageName = AppSettings.shared.languageName(targetLanguage)
+        let deck = Deck(
+            name: languageName,
+            description: "Deutsch → \(languageName)",
+            targetLanguage: targetLanguage
+        )
+        modelContext.insert(deck)
+        
+        do {
+            try modelContext.save()
+            return deck
+        } catch {
+            print("Error creating deck: \(error)")
+            return nil
+        }
+    }
+    
     func saveAndContinue() {
         saveCard()
         
         // Clear fields for next card
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             germanWord = ""
-            englishWord = ""
+            targetWord = ""
             exampleSentence = ""
             focusedField = .german
         }

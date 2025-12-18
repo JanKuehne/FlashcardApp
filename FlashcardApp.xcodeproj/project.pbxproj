@@ -6,8 +6,25 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		DC0621A02EEA0ECE00FE0FB4 /* Bilingual_Feature_Summary.md in Resources */ = {isa = PBXBuildFile; fileRef = DC06219F2EEA0ECE00FE0FB4 /* Bilingual_Feature_Summary.md */; };
+		DC0621A22EEA0F0000FE0FB4 /* BILINGUAL_TESTING.md in Resources */ = {isa = PBXBuildFile; fileRef = DC0621A12EEA0F0000FE0FB4 /* BILINGUAL_TESTING.md */; };
+		DC0621A42EEA0F4500FE0FB4 /* LANGUAGE_API_REFERENCE.md in Resources */ = {isa = PBXBuildFile; fileRef = DC0621A32EEA0F4500FE0FB4 /* LANGUAGE_API_REFERENCE.md */; };
+		DC0621A62EEA0F9600FE0FB4 /* ARCHITECTURE_DIAGRAM.md in Resources */ = {isa = PBXBuildFile; fileRef = DC0621A52EEA0F9600FE0FB4 /* ARCHITECTURE_DIAGRAM.md */; };
+		DC0621A82EEA0FD400FE0FB4 /* IMPLEMENTATION_COMPLETE.md in Resources */ = {isa = PBXBuildFile; fileRef = DC0621A72EEA0FD400FE0FB4 /* IMPLEMENTATION_COMPLETE.md */; };
+		DCCD2D492EE5BCEC00A89F03 /* Username_Feature_Summary.md in Resources */ = {isa = PBXBuildFile; fileRef = DCCD2D482EE5BCEC00A89F03 /* Username_Feature_Summary.md */; };
+		DCCD2D4B2EE5BD2400A89F03 /* Username_Visual_Guide.md in Resources */ = {isa = PBXBuildFile; fileRef = DCCD2D4A2EE5BD2400A89F03 /* Username_Visual_Guide.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		DC06219F2EEA0ECE00FE0FB4 /* Bilingual_Feature_Summary.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Bilingual_Feature_Summary.md; sourceTree = "<group>"; };
+		DC0621A12EEA0F0000FE0FB4 /* BILINGUAL_TESTING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = BILINGUAL_TESTING.md; sourceTree = "<group>"; };
+		DC0621A32EEA0F4500FE0FB4 /* LANGUAGE_API_REFERENCE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LANGUAGE_API_REFERENCE.md; sourceTree = "<group>"; };
+		DC0621A52EEA0F9600FE0FB4 /* ARCHITECTURE_DIAGRAM.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ARCHITECTURE_DIAGRAM.md; sourceTree = "<group>"; };
+		DC0621A72EEA0FD400FE0FB4 /* IMPLEMENTATION_COMPLETE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = IMPLEMENTATION_COMPLETE.md; sourceTree = "<group>"; };
 		DC5FE4922EC27FB200D1F2FE /* FlashcardApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FlashcardApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DCCD2D482EE5BCEC00A89F03 /* Username_Feature_Summary.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Username_Feature_Summary.md; sourceTree = "<group>"; };
+		DCCD2D4A2EE5BD2400A89F03 /* Username_Visual_Guide.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = Username_Visual_Guide.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -34,6 +51,13 @@
 			children = (
 				DC5FE4942EC27FB200D1F2FE /* FlashcardApp */,
 				DC5FE4932EC27FB200D1F2FE /* Products */,
+				DCCD2D482EE5BCEC00A89F03 /* Username_Feature_Summary.md */,
+				DCCD2D4A2EE5BD2400A89F03 /* Username_Visual_Guide.md */,
+				DC06219F2EEA0ECE00FE0FB4 /* Bilingual_Feature_Summary.md */,
+				DC0621A12EEA0F0000FE0FB4 /* BILINGUAL_TESTING.md */,
+				DC0621A32EEA0F4500FE0FB4 /* LANGUAGE_API_REFERENCE.md */,
+				DC0621A52EEA0F9600FE0FB4 /* ARCHITECTURE_DIAGRAM.md */,
+				DC0621A72EEA0FD400FE0FB4 /* IMPLEMENTATION_COMPLETE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -109,6 +133,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DCCD2D4B2EE5BD2400A89F03 /* Username_Visual_Guide.md in Resources */,
+				DCCD2D492EE5BCEC00A89F03 /* Username_Feature_Summary.md in Resources */,
+				DC0621A62EEA0F9600FE0FB4 /* ARCHITECTURE_DIAGRAM.md in Resources */,
+				DC0621A82EEA0FD400FE0FB4 /* IMPLEMENTATION_COMPLETE.md in Resources */,
+				DC0621A42EEA0F4500FE0FB4 /* LANGUAGE_API_REFERENCE.md in Resources */,
+				DC0621A22EEA0F0000FE0FB4 /* BILINGUAL_TESTING.md in Resources */,
+				DC0621A02EEA0ECE00FE0FB4 /* Bilingual_Feature_Summary.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
