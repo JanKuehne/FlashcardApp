@@ -4,13 +4,13 @@
 ## Color Palette
 
 ### Primary Colors
-- **Primary Blue**: `#0052FF` - Actions, positive feedback
-- **Primary Purple**: `#8B5CF6` - Leveling, progression
-- **Gradient**: Blue→Purple (buttons, XP bars)
+- **Primary Red**: `#EF4444` - Actions, positive feedback, main theme
+- **Primary Orange**: `#F97316` - Secondary actions, warm accents
+- **Gradient**: Red→Orange (buttons, XP bars, primary interactions)
 
 ### Accent Colors
-- **Orange**: `#F97316` - Streak, fire theme
-- **Red**: `#EF4444` - Wrong answers, urgency
+- **Orange (Streak)**: `#F97316` - Streak, fire theme
+- **Purple**: `#8B5CF6` - Keep for variety, special elements
 - **Green**: `#10B981` - Correct answers, success
 - **Yellow**: `#FBBF24` - Achievements, celebration
 
@@ -53,7 +53,7 @@
 - **正解** (correct) - Correct count
 
 ### Manga Visual Effects
-1. **Speed Lines**: Blue/purple gradients, diagonal motion
+1. **Speed Lines**: Red/orange gradients, diagonal motion
 2. **Impact Stars**: Yellow stars radiating from center
 3. **Halftone Dots**: Subtle background texture (3% opacity)
 4. **Sound Effects**: Bold text with outlines (SWOOSH!, CORRECT!)
@@ -100,7 +100,7 @@
 
 ### Progress Bars
 - Background: White 10% opacity
-- Fill: Gradient (blue→purple or green)
+- Fill: Gradient (red→orange or green for complete)
 - Border: 3px black stroke
 - Height: 20-24px
 - Corner radius: 8px

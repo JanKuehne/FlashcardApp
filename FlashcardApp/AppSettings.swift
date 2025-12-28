@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Observation
 
 /// App-wide settings and configuration
 @Observable

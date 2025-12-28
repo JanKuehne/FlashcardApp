@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct AddCardView: View {
     @Environment(\.modelContext) private var modelContext

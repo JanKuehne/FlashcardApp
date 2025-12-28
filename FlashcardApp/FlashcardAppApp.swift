@@ -47,7 +47,7 @@ struct FlashcardAppApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SplashScreenView()
                 .task {
                     // Seed demo data on first launch
                     await MainActor.run {

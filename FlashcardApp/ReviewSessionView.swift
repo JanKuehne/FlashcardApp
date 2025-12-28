@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ReviewSessionView: View {
     @Environment(\.modelContext) private var modelContext
@@ -286,7 +287,7 @@ struct ReviewSessionView: View {
                 
                 Spacer()
                 
-                VStack(spacing: 16) {
+                VStack(spacing: 12) {
                     MangaActionButton(
                         title: "もう一度",
                         subtitle: "NOCHMAL ÜBEN",
@@ -308,8 +309,8 @@ struct ReviewSessionView: View {
                         dismiss()
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.bottom, 40)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 20)
             }
         }
     }
@@ -635,27 +636,28 @@ struct MangaActionButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Text(title)
-                    .font(.system(.caption, design: .rounded))
+                    .font(.system(.caption2, design: .rounded))
                     .fontWeight(.bold)
                     .foregroundColor(.white.opacity(0.8))
                 
                 Text(subtitle)
-                    .font(.system(.title3, design: .rounded))
+                    .font(.system(.body, design: .rounded))
                     .fontWeight(.black)
                     .foregroundColor(.white)
                     .textCase(.uppercase)
             }
             .frame(maxWidth: .infinity)
-            .padding()
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
             .background(color)
-            .cornerRadius(16)
+            .cornerRadius(12)
             .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.black, lineWidth: 4)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.black, lineWidth: 3)
             )
-            .shadow(color: .black.opacity(0.5), radius: 10, y: 5)
+            .shadow(color: .black.opacity(0.5), radius: 8, y: 4)
         }
         .buttonStyle(MangaButtonStyle())
     }

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -120,13 +121,17 @@ struct ContentView: View {
             Color.black
                 .ignoresSafeArea()
             
-            HalftonePattern()
-                .opacity(0.03)
+            // Add the dashboard background red image
+            Image("dashboard_background_red")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
                 .ignoresSafeArea()
-                .allowsHitTesting(false)
+                .opacity(0.4)
             
             MangaBackdrop()
-                .opacity(0.3)
+                .opacity(0.8)
                 .ignoresSafeArea()
                 .allowsHitTesting(false)
             
@@ -174,6 +179,16 @@ struct ContentView: View {
             )
             .padding(.horizontal)
             
+            // LERNEN STARTEN button - moved up here for immediate visibility
+            StartLearningButton(
+                activeFlashcards: activeFlashcards,
+                selectedLanguage: selectedLanguage,
+                cardsCompletedToday: cardsCompletedToday,
+                dailyGoal: progress.dailyGoal,
+                onStart: handleStartLearning
+            )
+            .padding(.horizontal, 24)
+            
             statBoxes
             
             LanguageSelectorView(
@@ -185,16 +200,6 @@ struct ContentView: View {
             
             Spacer()
                 .frame(height: 40)
-            
-            StartLearningButton(
-                activeFlashcards: activeFlashcards,
-                selectedLanguage: selectedLanguage,
-                cardsCompletedToday: cardsCompletedToday,
-                dailyGoal: progress.dailyGoal,
-                onStart: handleStartLearning
-            )
-            .padding(.horizontal, 24)
-            .padding(.bottom, 40)
         }
     }
     
@@ -483,75 +488,59 @@ struct MangaStatBox: View {
 
 struct MangaBackdrop: View {
     var body: some View {
-        GeometryReader { geometry in
-            ZStack {
-                // Geometric manga panels for depth
-                Path { path in
-                    path.move(to: CGPoint(x: -50, y: geometry.size.height * 0.3))
-                    path.addLine(to: CGPoint(x: 100, y: geometry.size.height * 0.2))
-                    path.addLine(to: CGPoint(x: 150, y: geometry.size.height * 0.8))
-                    path.addLine(to: CGPoint(x: 50, y: geometry.size.height))
-                    path.addLine(to: CGPoint(x: -50, y: geometry.size.height))
-                    path.closeSubpath()
-                }
-                .fill(
-                    LinearGradient(
-                        colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.2)],
-                        startPoint: .top,
-                        endPoint: .bottom
+        ZStack {
+            // Geometric manga panels with red theme - EVEN BIGGER and BOLDER
+            GeometryReader { geometry in
+                ZStack {
+                    // LEFT PANEL - Much larger and brighter
+                    Path { path in
+                        path.move(to: CGPoint(x: 0, y: 0))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.5, y: 0))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.35, y: geometry.size.height * 0.5))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.25, y: geometry.size.height))
+                        path.addLine(to: CGPoint(x: 0, y: geometry.size.height))
+                        path.closeSubpath()
+                    }
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.tsukiRed.opacity(0.6), Color.tsukiOrange.opacity(0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                
-                Path { path in
-                    path.move(to: CGPoint(x: geometry.size.width + 50, y: geometry.size.height * 0.4))
-                    path.addLine(to: CGPoint(x: geometry.size.width - 100, y: geometry.size.height * 0.3))
-                    path.addLine(to: CGPoint(x: geometry.size.width - 150, y: geometry.size.height * 0.9))
-                    path.addLine(to: CGPoint(x: geometry.size.width - 50, y: geometry.size.height))
-                    path.addLine(to: CGPoint(x: geometry.size.width + 50, y: geometry.size.height))
-                    path.closeSubpath()
-                }
-                .fill(
-                    LinearGradient(
-                        colors: [Color.orange.opacity(0.3), Color.red.opacity(0.2)],
-                        startPoint: .top,
-                        endPoint: .bottom
+                    
+                    // RIGHT PANEL - Much larger and brighter
+                    Path { path in
+                        path.move(to: CGPoint(x: geometry.size.width, y: 0))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.5, y: 0))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.65, y: geometry.size.height * 0.5))
+                        path.addLine(to: CGPoint(x: geometry.size.width * 0.75, y: geometry.size.height))
+                        path.addLine(to: CGPoint(x: geometry.size.width, y: geometry.size.height))
+                        path.closeSubpath()
+                    }
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.tsukiOrange.opacity(0.6), Color.tsukiRed.opacity(0.5)],
+                            startPoint: .topTrailing,
+                            endPoint: .bottomLeading
+                        )
                     )
-                )
-                
-                // MANGA CHARACTER PNG IMAGES - Commented out to debug
-                /*
-                // Hero action character - Left side
-                Image("hero_action_blue")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 180, height: 180)
-                    .opacity(0.8)
-                    .position(x: 90, y: geometry.size.height * 0.5)
-                
-                // Ninja character - Right side
-                Image("ninja_side_purple")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 160, height: 160)
-                    .opacity(0.8)
-                    .position(x: geometry.size.width - 80, y: geometry.size.height * 0.6)
-                
-                // Fox mascot - Bottom left
-                Image("fox_mascot_orange")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 120, height: 120)
-                    .opacity(0.8)
-                    .position(x: 100, y: geometry.size.height - 100)
-                
-                // Victory power character - Top right
-                Image("victory_power_red")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 150, height: 150)
-                    .opacity(0.8)
-                    .position(x: geometry.size.width - 70, y: 180)
-                */
+                    
+                    // CENTER ACCENT - Vertical stripe
+                    Rectangle()
+                        .fill(Color.tsukiRed.opacity(0.15))
+                        .frame(width: 3)
+                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    
+                    // SPEED LINES - Manga action effect (more visible)
+                    ForEach(0..<12) { i in
+                        Rectangle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(width: 3)
+                            .rotationEffect(.degrees(-20))
+                            .offset(x: CGFloat(i) * 60 - 200)
+                    }
+                }
             }
         }
     }
@@ -751,43 +740,43 @@ struct StartLearningButton: View {
     
     var body: some View {
         Button(action: onStart) {
-            VStack(spacing: 8) {
-                HStack(spacing: 12) {
+            VStack(spacing: 4) {
+                HStack(spacing: 8) {
                     Text("開始")
-                        .font(.system(.title3, design: .rounded))
+                        .font(.system(.caption, design: .rounded))
                         .fontWeight(.black)
                         .foregroundColor(.white.opacity(0.9))
                     
                     Text(flag)
-                        .font(.system(size: 28))
+                        .font(.system(size: 20))
                 }
                 
                 Text(buttonTitle)
-                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .font(.system(size: 20, weight: .black, design: .rounded))
                     .foregroundColor(.white)
                     .textCase(.uppercase)
                 
                 if hasCards {
                     Text(cardCountText)
-                        .font(.system(.headline, design: .rounded))
+                        .font(.system(.subheadline, design: .rounded))
                         .fontWeight(.bold)
                         .foregroundColor(.white.opacity(0.8))
                 } else {
                     Text("KEINE KARTEN - TIPPE ZUM HINZUFÜGEN")
-                        .font(.system(.caption, design: .rounded))
+                        .font(.system(.caption2, design: .rounded))
                         .fontWeight(.bold)
                         .foregroundColor(.yellow)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 24)
+            .padding(.vertical, 16)
             .background(buttonBackground)
-            .cornerRadius(20)
+            .cornerRadius(16)
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.black, lineWidth: 5)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.black, lineWidth: 3)
             )
-            .shadow(color: hasCards ? .blue.opacity(0.5) : .clear, radius: 20, y: 10)
+            .shadow(color: hasCards ? .blue.opacity(0.5) : .clear, radius: 12, y: 6)
         }
     }
     
