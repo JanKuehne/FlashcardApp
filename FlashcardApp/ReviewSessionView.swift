@@ -36,7 +36,15 @@ struct ReviewSessionView: View {
     }
     
     var dailyGoal: Int {
-        userProgress.first?.dailyGoal ?? 20
+        userProgress.first?.dailyGoal ?? 100
+    }
+    
+    var cardsPerSession: Int {
+        userProgress.first?.cardsPerSession ?? 20
+    }
+    
+    var reviewMode: String {
+        userProgress.first?.reviewMode ?? "newest"
     }
     
     var body: some View {
@@ -120,6 +128,37 @@ struct ReviewSessionView: View {
             
             let card = cards[currentIndex]
             
+            // Learning status badge
+            if card.cardState == "learning" {
+                HStack {
+                    HStack(spacing: 6) {
+                        Image(systemName: "book.fill")
+                            .font(.caption)
+                        Text("LERNEN")
+                            .font(.system(.caption, design: .rounded))
+                            .fontWeight(.black)
+                        if card.learningStep > 0 {
+                            Text("(\(card.learningStep + 1)/3)")
+                                .font(.system(.caption2, design: .rounded))
+                                .fontWeight(.bold)
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.8))
+                    .cornerRadius(20)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.black, lineWidth: 2)
+                    )
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 32)
+                .padding(.bottom, 8)
+            }
+            
             ZStack {
                 if isFlipped {
                     MangaSpeedLines()
@@ -134,7 +173,8 @@ struct ReviewSessionView: View {
                     MangaCardFace(
                         text: card.back,
                         subtitle: card.exampleSentence,
-                        isAnswer: true
+                        isAnswer: true,
+                        language: selectedDeck.targetLanguage == "es" ? "es-ES" : "en-US"
                     )
                     .opacity(isFlipped ? 1 : 0)
                     .rotation3DEffect(
@@ -145,7 +185,8 @@ struct ReviewSessionView: View {
                     MangaCardFace(
                         text: card.front,
                         subtitle: "タップ!",
-                        isAnswer: false
+                        isAnswer: false,
+                        language: "de-DE"
                     )
                     .opacity(isFlipped ? 0 : 1)
                     .rotation3DEffect(
@@ -172,6 +213,11 @@ struct ReviewSessionView: View {
                 
                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                     isFlipped.toggle()
+                }
+                
+                // Auto-play back side when flipped
+                if isFlipped {
+                    autoPlayIfNeeded(front: false)
                 }
             }
             
@@ -337,10 +383,91 @@ struct ReviewSessionView: View {
         )
         
         if let fetchedCards = try? modelContext.fetch(descriptor) {
-            cards = fetchedCards
-                .filter { $0.deckId == selectedDeck.id }
-                .prefix(dailyGoal)
-                .map { $0 }
+            // Filter cards for this deck
+            let deckCards = fetchedCards.filter { $0.deckId == selectedDeck.id }
+            
+            // LEARNING QUEUE SYSTEM
+            // Priority 1: Cards in learning (need multiple exposures today)
+            // Priority 2: Due cards (graduated cards ready for review)
+            // Priority 3: New cards (start learning if session not full)
+            
+            var selectedCards: [Flashcard] = []
+            let sessionSize = cardsPerSession  // Use cards per session, not daily goal
+            
+            // 1. Get learning cards (highest priority - must finish learning)
+            let learningCards = deckCards
+                .filter { $0.cardState == "learning" && $0.nextReviewDate <= Date() }
+                .sorted { $0.createdDate > $1.createdDate }  // Newest first
+            
+            selectedCards.append(contentsOf: learningCards.prefix(sessionSize))
+            print("📚 Learning cards: \(learningCards.count)")
+            
+            // 2. If not full, add due cards (graduated, ready for review)
+            if selectedCards.count < sessionSize {
+                let dueCards = deckCards
+                    .filter { 
+                        $0.cardState == "graduated" && 
+                        $0.nextReviewDate <= Date() 
+                    }
+                    .sorted { $0.nextReviewDate < $1.nextReviewDate }  // Oldest due first
+                
+                let needed = sessionSize - selectedCards.count
+                selectedCards.append(contentsOf: dueCards.prefix(needed))
+                print("🔄 Due cards: \(dueCards.count)")
+            }
+            
+            // 3. If still not full, add new cards (never reviewed)
+            if selectedCards.count < sessionSize {
+                let allNewCards = deckCards
+                    .filter { $0.timesReviewed == 0 && $0.cardState == "learning" }
+                
+                // Sort based on reviewMode setting
+                let newCards: [Flashcard]
+                if reviewMode == "newest" {
+                    // NEUESTE: Focus on newest cards (Anki-style)
+                    newCards = allNewCards.sorted { $0.createdDate > $1.createdDate }
+                    print("✨ Mode: NEUESTE - Newest cards first")
+                } else {
+                    // ALLE: Mix all cards evenly (shuffle or oldest first)
+                    newCards = allNewCards.sorted { $0.createdDate < $1.createdDate }
+                    print("📚 Mode: ALLE - All cards mixed")
+                }
+                
+                let needed = sessionSize - selectedCards.count
+                selectedCards.append(contentsOf: newCards.prefix(needed))
+                print("✨ New cards added: \(min(needed, newCards.count))")
+            }
+            
+            cards = selectedCards
+            print("📊 Session: \(cards.count) cards total (Mode: \(reviewMode))")
+        }
+        
+        // Auto-play first card if enabled
+        if !cards.isEmpty {
+            autoPlayIfNeeded(front: true)
+        }
+    }
+    
+    /// Auto-play audio based on settings
+    func autoPlayIfNeeded(front: Bool) {
+        guard currentIndex < cards.count else { return }
+        
+        let mode = AudioService.shared.autoPlayMode
+        let shouldPlay = (front && (mode == .frontOnly || mode == .bothSides)) ||
+                         (!front && (mode == .backOnly || mode == .bothSides))
+        
+        guard shouldPlay else { return }
+        
+        let delay = AudioService.shared.autoPlayDelay
+        let card = cards[currentIndex]
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            if front {
+                AudioService.shared.speakGerman(card.front)
+            } else {
+                let languageCode = self.selectedDeck.targetLanguage == "es" ? "es-ES" : "en-US"
+                AudioService.shared.speak(card.back, language: languageCode)
+            }
         }
     }
     
@@ -393,6 +520,9 @@ struct ReviewSessionView: View {
             if currentIndex < cards.count - 1 {
                 currentIndex += 1
                 isFlipped = false
+                
+                // Auto-play next card (front side)
+                autoPlayIfNeeded(front: true)
             } else {
                 sessionComplete = true
                 saveSessionAndUpdateProgress()
@@ -401,30 +531,90 @@ struct ReviewSessionView: View {
     }
     
     func updateCardWithSM2(card: Flashcard, grade: ReviewGrade) {
-        if grade == .wrong {
-            card.repetitions = 0
-            card.interval = 0
-            card.nextReviewDate = Date()
-            card.easinessFactor = max(1.3, card.easinessFactor - 0.2)
+        // LEARNING QUEUE SYSTEM (Anki-style)
+        // New cards stay in "learning" until mastered
+        // Graduated cards use normal SM-2
+        
+        if card.cardState == "learning" {
+            // ============================================
+            // LEARNING PHASE: New cards need multiple exposures
+            // ============================================
+            
+            switch grade {
+            case .easy:
+                // Mastered immediately! Graduate to reviews
+                card.cardState = "graduated"
+                card.repetitions = 1
+                card.interval = 1  // Show tomorrow
+                if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) {
+                    card.nextReviewDate = tomorrow
+                }
+                print("🎓 Card graduated after first attempt!")
+                
+            case .hard:
+                // Making progress, but needs more practice
+                card.learningStep += 1
+                
+                if card.learningStep >= 2 {
+                    // Seen 2+ times with "hard" - graduate anyway
+                    card.cardState = "graduated"
+                    card.repetitions = 1
+                    card.interval = 1
+                    if let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: Date()) {
+                        card.nextReviewDate = tomorrow
+                    }
+                    print("🎓 Card graduated after \(card.learningStep) learning attempts")
+                } else {
+                    // Show again later in this session
+                    card.nextReviewDate = Date()
+                    print("📚 Card stays in learning, step \(card.learningStep)")
+                }
+                
+            case .wrong:
+                // Reset learning progress
+                card.learningStep = 0
+                card.nextReviewDate = Date()  // Show again soon
+                card.easinessFactor = max(1.3, card.easinessFactor - 0.2)
+                print("❌ Card reset in learning phase")
+            }
+            
         } else {
-            card.repetitions += 1
+            // ============================================
+            // GRADUATED PHASE: Normal SM-2 Algorithm
+            // ============================================
             
-            if card.repetitions == 1 {
-                card.interval = 1
-            } else if card.repetitions == 2 {
-                card.interval = 6
+            if grade == .wrong {
+                // Failed review - back to learning!
+                card.cardState = "learning"
+                card.learningStep = 0
+                card.repetitions = 0
+                card.interval = 0
+                card.nextReviewDate = Date()
+                card.easinessFactor = max(1.3, card.easinessFactor - 0.2)
+                print("⚠️ Card demoted back to learning")
             } else {
-                card.interval = Int(Double(card.interval) * card.easinessFactor)
-            }
-            
-            if grade == .hard {
-                card.easinessFactor = max(1.3, card.easinessFactor - 0.15)
-            } else if grade == .easy {
-                card.easinessFactor = min(2.5, card.easinessFactor + 0.1)
-            }
-            
-            if let nextDate = Calendar.current.date(byAdding: .day, value: card.interval, to: Date()) {
-                card.nextReviewDate = nextDate
+                // Correct - continue SM-2
+                card.repetitions += 1
+                
+                if card.repetitions == 1 {
+                    card.interval = 1
+                } else if card.repetitions == 2 {
+                    card.interval = 6
+                } else {
+                    card.interval = Int(Double(card.interval) * card.easinessFactor)
+                }
+                
+                if grade == .hard {
+                    card.easinessFactor = max(1.3, card.easinessFactor - 0.15)
+                } else if grade == .easy {
+                    card.easinessFactor = min(2.5, card.easinessFactor + 0.1)
+                }
+                
+                if let nextDate = Calendar.current.date(byAdding: .day, value: card.interval, to: Date()) {
+                    card.nextReviewDate = nextDate
+                }
+                
+                print("✅ Card reviewed, next in \(card.interval) days")
             }
         }
     }
@@ -489,6 +679,7 @@ struct MangaCardFace: View {
     let text: String
     let subtitle: String?
     let isAnswer: Bool
+    let language: String  // NEW: Language code for audio
     
     var body: some View {
         ZStack {
@@ -509,6 +700,15 @@ struct MangaCardFace: View {
                     .multilineTextAlignment(.center)
                     .shadow(color: isAnswer ? .black.opacity(0.3) : .clear, radius: 2)
                     .textCase(.uppercase)
+                
+                // Audio button
+                AudioButton(
+                    text: text,
+                    language: language,
+                    size: 50,
+                    iconSize: 22
+                )
+                .padding(.top, 8)
                 
                 if let subtitle = subtitle {
                     Text(subtitle)

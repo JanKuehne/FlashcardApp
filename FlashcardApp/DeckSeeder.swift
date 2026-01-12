@@ -15,22 +15,61 @@ class DeckSeeder {
         let descriptor = FetchDescriptor<Deck>()
         let existingDecks = try? modelContext.fetch(descriptor)
         
-        if let decks = existingDecks, !decks.isEmpty {
-            print("Demo deck already exists, skipping seed")
+        // Check for old "Grundwortschatz" demo deck and remove it
+        if let decks = existingDecks,
+           let oldDemoDeck = decks.first(where: { $0.name == "Grundwortschatz" }) {
+            print("🔄 Found old demo deck 'Grundwortschatz', migrating to new starter decks...")
+            
+            // Delete old demo cards
+            let cardDescriptor = FetchDescriptor<Flashcard>()
+            if let allCards = try? modelContext.fetch(cardDescriptor) {
+                let oldCards = allCards.filter { $0.deckId == oldDemoDeck.id }
+                for card in oldCards {
+                    modelContext.delete(card)
+                }
+                print("🗑️ Deleted \(oldCards.count) old demo cards")
+            }
+            
+            // Delete old demo deck
+            modelContext.delete(oldDemoDeck)
+            print("🗑️ Deleted old 'Grundwortschatz' deck")
+            
+            // Continue to create new starter decks below...
+        } else if let decks = existingDecks, 
+                  !decks.isEmpty,
+                  decks.contains(where: { $0.name == "English Starter" || $0.name == "Spanish Starter" }) {
+            // New starter decks already exist, skip
+            print("✅ Starter decks already exist, skipping seed")
+            return
+        } else if let decks = existingDecks, !decks.isEmpty {
+            // User has custom decks, don't add starters
+            print("✅ User has existing decks, skipping starter seed")
             return
         }
         
-        // Create demo deck
-        let demoDeck = Deck(
-            name: "Grundwortschatz",
-            description: "50 wichtige deutsche Wörter für Anfänger",
-            color: "#0052FF"
+        // Create English starter deck
+        let englishDeck = Deck(
+            name: "English Starter",
+            description: "5 essential words to get started",
+            color: "#00B050",  // Green for English
+            targetLanguage: "en"
         )
-        modelContext.insert(demoDeck)
+        modelContext.insert(englishDeck)
         
-        // Create flashcards
-        let cards = createDemoCards(deckId: demoDeck.id)
-        for card in cards {
+        // Create Spanish starter deck
+        let spanishDeck = Deck(
+            name: "Spanish Starter",
+            description: "5 palabras esenciales para empezar",
+            color: "#FF6B35",  // Orange for Spanish
+            targetLanguage: "es"
+        )
+        modelContext.insert(spanishDeck)
+        
+        // Create starter cards for each language
+        let englishCards = createEnglishStarterCards(deckId: englishDeck.id)
+        let spanishCards = createSpanishStarterCards(deckId: spanishDeck.id)
+        
+        for card in englishCards + spanishCards {
             modelContext.insert(card)
         }
         
@@ -41,96 +80,48 @@ class DeckSeeder {
         // Save everything
         try? modelContext.save()
         
-        print("✅ Demo deck created with \(cards.count) cards")
+        print("✅ Starter decks created: \(englishCards.count) English + \(spanishCards.count) Spanish cards")
     }
     
-    private static func createDemoCards(deckId: UUID) -> [Flashcard] {
-        var cards: [Flashcard] = []
-        
-        // TIERE (Animals) - 10 cards - Examples in ENGLISH (the foreign language)
-        let animals = [
-            ("der Hund", "the dog", "The dog barks loudly."),
-            ("die Katze", "the cat", "The cat is very cute."),
-            ("der Vogel", "the bird", "The bird flies high."),
-            ("der Fisch", "the fish", "The fish swims in water."),
-            ("das Pferd", "the horse", "The horse runs fast."),
-            ("die Maus", "the mouse", "The mouse is small."),
-            ("der Elefant", "the elephant", "The elephant is big."),
-            ("die Kuh", "the cow", "The cow gives milk."),
-            ("das Schwein", "the pig", "The pig is pink."),
-            ("der Löwe", "the lion", "The lion is strong.")
+    // MARK: - English Starter Cards (5 essential words)
+    
+    private static func createEnglishStarterCards(deckId: UUID) -> [Flashcard] {
+        let starterWords = [
+            ("Hallo", "hello", "Hello! How are you?"),
+            ("danke", "thank you", "Thank you very much!"),
+            ("Wasser", "water", "Water is essential."),
+            ("gut", "good", "This is very good."),
+            ("Freund", "friend", "You are my friend.")
         ]
         
-        // FARBEN (Colors) - 10 cards - Examples in ENGLISH
-        let colors = [
-            ("rot", "red", "The car is red."),
-            ("blau", "blue", "The sky is blue."),
-            ("grün", "green", "The grass is green."),
-            ("gelb", "yellow", "The sun is yellow."),
-            ("schwarz", "black", "The night is black."),
-            ("weiß", "white", "The snow is white."),
-            ("braun", "brown", "The tree is brown."),
-            ("orange", "orange", "The orange is orange."),
-            ("rosa", "pink", "The flower is pink."),
-            ("lila", "purple", "The plum is purple.")
-        ]
-        
-        // ZAHLEN (Numbers) - 10 cards - Examples in ENGLISH
-        let numbers = [
-            ("eins", "one", "I have one apple."),
-            ("zwei", "two", "I have two brothers."),
-            ("drei", "three", "Three apples are on the table."),
-            ("vier", "four", "There are four seasons."),
-            ("fünf", "five", "I have five fingers."),
-            ("sechs", "six", "Six eggs are in the carton."),
-            ("sieben", "seven", "The week has seven days."),
-            ("acht", "eight", "The spider has eight legs."),
-            ("neun", "nine", "There are nine planets."),
-            ("zehn", "ten", "I have ten fingers.")
-        ]
-        
-        // FAMILIE (Family) - 10 cards - Examples in ENGLISH
-        let family = [
-            ("die Mutter", "the mother", "My mother is nice."),
-            ("der Vater", "the father", "My father works."),
-            ("der Bruder", "the brother", "My brother plays football."),
-            ("die Schwester", "the sister", "My sister likes reading."),
-            ("die Oma", "the grandmother", "My grandma bakes cakes."),
-            ("der Opa", "the grandfather", "My grandpa tells stories."),
-            ("das Kind", "the child", "The child plays in the garden."),
-            ("der Sohn", "the son", "The son is young."),
-            ("die Tochter", "the daughter", "The daughter sings beautifully."),
-            ("die Eltern", "the parents", "My parents are kind.")
-        ]
-        
-        // ESSEN (Food) - 10 cards - Examples in ENGLISH
-        let food = [
-            ("das Brot", "the bread", "I eat bread for breakfast."),
-            ("das Wasser", "the water", "Water is healthy."),
-            ("die Milch", "the milk", "The milk is white."),
-            ("der Apfel", "the apple", "The apple is red."),
-            ("die Banane", "the banana", "The banana is yellow."),
-            ("der Käse", "the cheese", "The cheese tastes good."),
-            ("das Ei", "the egg", "The egg is for breakfast."),
-            ("der Fisch", "the fish", "The fish swims in the sea."),
-            ("das Fleisch", "the meat", "The meat is on the plate."),
-            ("der Kuchen", "the cake", "The cake is sweet.")
-        ]
-        
-        // Combine all categories
-        let allVocab = animals + colors + numbers + family + food
-        
-        // Create Flashcard objects
-        for (german, english, example) in allVocab {
-            let card = Flashcard(
+        return starterWords.map { german, english, example in
+            Flashcard(
                 front: german,
                 back: english,
                 deckId: deckId,
                 exampleSentence: example
             )
-            cards.append(card)
         }
+    }
+    
+    // MARK: - Spanish Starter Cards (5 essential words)
+    
+    private static func createSpanishStarterCards(deckId: UUID) -> [Flashcard] {
+        let starterWords = [
+            ("Hallo", "hola", "¡Hola! ¿Cómo estás?"),
+            ("danke", "gracias", "¡Muchas gracias!"),
+            ("Wasser", "agua", "El agua es esencial."),
+            ("gut", "bueno", "Esto es muy bueno."),
+            ("Freund", "amigo", "Tú eres mi amigo.")
+        ]
         
-        return cards
+        return starterWords.map { german, spanish, example in
+            Flashcard(
+                front: german,
+                back: spanish,
+                deckId: deckId,
+                exampleSentence: example
+            )
+        }
     }
 }

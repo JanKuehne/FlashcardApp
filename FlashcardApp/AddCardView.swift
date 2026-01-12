@@ -22,6 +22,7 @@ struct AddCardView: View {
     @State private var isLoadingAI = false
     @State private var aiErrorMessage: String?
     @State private var targetLanguage: String = AppSettings.shared.lastTargetLanguage
+    @State private var showCameraScanner = false
     
     @FocusState private var focusedField: Field?
     
@@ -445,6 +446,28 @@ struct AddCardView: View {
                         .fontWeight(.black)
                         .foregroundColor(.white.opacity(0.8))
                 }
+                
+                ToolbarItem(placement: .primaryAction) {
+                    Button {
+                        showCameraScanner = true
+                    } label: {
+                        Image(systemName: "camera.fill")
+                            .font(.title3)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            .sheet(isPresented: $showCameraScanner) {
+                // Get or create deck for current language
+                if let deck = decks.first(where: { $0.targetLanguage == targetLanguage }) ?? createDeckForLanguage() {
+                    CameraScannerView(
+                        onWordsExtracted: { extractedWords in
+                            handleExtractedWords(extractedWords, deckId: deck.id)
+                        },
+                        deckId: deck.id,
+                        targetLanguage: deck.targetLanguage  // FIX: Pass deck's target language
+                    )
+                }
             }
         }
     }
@@ -536,6 +559,9 @@ struct AddCardView: View {
         do {
             try modelContext.save()
             
+            // Notify other views to refresh
+            NotificationCenter.default.post(name: NSNotification.Name("CardsDidChange"), object: nil)
+            
             // Haptic feedback
             UINotificationFeedbackGenerator().notificationOccurred(.success)
             
@@ -593,6 +619,63 @@ struct AddCardView: View {
         // Dismiss after short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
             dismiss()
+        }
+    }
+    
+    // MARK: - Handle Extracted Words from Camera
+    
+    func handleExtractedWords(_ words: [ExtractedWord], deckId: UUID) {
+        // Find the deck (we already know it exists since we passed it to CameraScannerView)
+        guard let deck = decks.first(where: { $0.id == deckId }) else {
+            print("❌ Error: Deck not found with id \(deckId)")
+            return
+        }
+        
+        var savedCount = 0
+        
+        for word in words {
+            // Only save words that have both German and translation
+            guard !word.german.isEmpty && !word.translation.isEmpty else {
+                continue
+            }
+            
+            let card = Flashcard(
+                front: word.german,
+                back: word.translation,
+                deckId: deck.id,
+                exampleSentence: word.exampleSentence // ✨ Now includes AI-generated examples!
+            )
+            
+            modelContext.insert(card)
+            savedCount += 1
+        }
+        
+        do {
+            try modelContext.save()
+            
+            // Notify other views to refresh
+            NotificationCenter.default.post(name: NSNotification.Name("CardsDidChange"), object: nil)
+            
+            // Update counter
+            cardsSaved += savedCount
+            
+            // Success haptic
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+            
+            // Show success animation
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                showSuccess = true
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                withAnimation {
+                    showSuccess = false
+                }
+            }
+            
+        } catch {
+            print("Error saving cards from camera: \(error)")
+            UINotificationFeedbackGenerator().notificationOccurred(.error)
         }
     }
 }

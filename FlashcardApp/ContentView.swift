@@ -14,13 +14,16 @@ struct ContentView: View {
     @Query private var userProgress: [UserProgress]
     @Query private var decks: [Deck]
     @Query private var flashcards: [Flashcard]
+    @Query private var allReviewSessions: [ReviewSession]  // NEW: Query all review sessions
     
     @State private var showReviewSession = false
     @State private var showAddCard = false
     @State private var showSettings = false
+    @State private var showCardManagement = false
     @State private var cardsCompletedToday = 0
     @State private var showCelebration = false
     @State private var selectedLanguage: String = "en" // Default to English
+    @State private var refreshID = UUID() // Force refresh after card operations
     
     // Get the active deck based on selected language
     var activeDeck: Deck? {
@@ -58,6 +61,13 @@ struct ContentView: View {
                 }
                 .sheet(isPresented: $showSettings) {
                     SettingsView()
+                }
+                .sheet(isPresented: $showCardManagement) {
+                    CardManagementView()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("CardsDidChange"))) { _ in
+                    // Force refresh when cards are added/deleted/edited
+                    refreshID = UUID()
                 }
                 .task {
                     updateCardsCompletedToday()
@@ -175,7 +185,8 @@ struct ContentView: View {
             
             DailyGoalCard(
                 cardsCompletedToday: cardsCompletedToday,
-                dailyGoal: progress.dailyGoal
+                dailyGoal: progress.dailyGoal,
+                cardsPerSession: progress.cardsPerSession
             )
             .padding(.horizontal)
             
@@ -189,14 +200,15 @@ struct ContentView: View {
             )
             .padding(.horizontal, 24)
             
-            statBoxes
-            
+            // Language selector - moved up for better flow
             LanguageSelectorView(
                 selectedLanguage: $selectedLanguage,
                 decks: decks,
                 flashcards: flashcards
             )
             .padding(.horizontal)
+            
+            statBoxes
             
             Spacer()
                 .frame(height: 40)
@@ -254,24 +266,61 @@ struct ContentView: View {
     }
     
     private var statBoxes: some View {
-        HStack(spacing: 16) {
-            MangaStatBox(
-                value: "\(progress.totalCardsReviewed)",
-                label: "GELERNT",
-                color: .blue
-            )
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                MangaStatBox(
+                    value: "\(activeCardsReviewed)",  // Per-language reviewed count
+                    label: "GELERNT",
+                    color: .blue
+                )
+                
+                MangaStatBox(
+                    value: "\(activeFlashcards.count)",
+                    label: "KARTEN",
+                    color: .purple
+                )
+                
+                MangaStatBox(
+                    value: accuracyPercentage,  // Per-language accuracy
+                    label: "GENAUIGKEIT",
+                    color: .green
+                )
+            }
             
-            MangaStatBox(
-                value: "\(activeFlashcards.count)",
-                label: "KARTEN",
-                color: .purple
-            )
-            
-            MangaStatBox(
-                value: accuracyPercentage,
-                label: "GENAUIGKEIT",
-                color: .green
-            )
+            // Manage Cards Button
+            Button {
+                showCardManagement = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "list.bullet.rectangle")
+                        .font(.title3)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("KARTEN VERWALTEN")
+                            .font(.system(.subheadline, design: .rounded))
+                            .fontWeight(.black)
+                        
+                        Text("Bearbeiten & Löschen")
+                            .font(.system(.caption2, design: .rounded))
+                            .fontWeight(.semibold)
+                            .opacity(0.8)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .opacity(0.6)
+                }
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.white.opacity(0.05))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                )
+            }
         }
         .padding(.horizontal)
     }
@@ -316,9 +365,24 @@ struct ContentView: View {
         xpForNextLevel(currentLevel: currentLevel, currentXP: progress.totalXP)
     }
     
+    // NEW: Filter review sessions by active deck
+    var activeReviewSessions: [ReviewSession] {
+        guard let deck = activeDeck else { return [] }
+        return allReviewSessions.filter { $0.deckId == deck.id }
+    }
+    
+    // NEW: Cards reviewed for active language
+    var activeCardsReviewed: Int {
+        activeReviewSessions.reduce(0) { $0 + $1.cardsReviewed }
+    }
+    
+    // NEW: Accuracy for active language
     var accuracyPercentage: String {
-        guard progress.totalCardsReviewed > 0 else { return "0%" }
-        let percentage = Int(Double(progress.totalCorrectAnswers) / Double(progress.totalCardsReviewed) * 100)
+        let totalReviewed = activeReviewSessions.reduce(0) { $0 + $1.cardsReviewed }
+        guard totalReviewed > 0 else { return "0%" }
+        
+        let totalCorrect = activeReviewSessions.reduce(0) { $0 + $1.correctAnswers }
+        let percentage = Int(Double(totalCorrect) / Double(totalReviewed) * 100)
         return "\(percentage)%"
     }
     
@@ -606,6 +670,7 @@ struct ChibiMascot: View {
 struct DailyGoalCard: View {
     let cardsCompletedToday: Int
     let dailyGoal: Int
+    let cardsPerSession: Int
     
     private var isComplete: Bool { 
         dailyGoal > 0 && cardsCompletedToday >= dailyGoal 
@@ -699,6 +764,33 @@ struct DailyGoalCard: View {
                 }
             }
             .frame(height: 24)
+            
+            Divider()
+                .background(Color.white.opacity(0.3))
+            
+            // Cards Per Session Info
+            HStack {
+                Image(systemName: "rectangle.stack")
+                    .font(.title3)
+                    .foregroundColor(.purple)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("KARTEN PRO DURCHLAUF")
+                        .font(.system(.caption, design: .rounded))
+                        .fontWeight(.black)
+                        .foregroundColor(.purple.opacity(0.8))
+                    
+                    Text("\(cardsPerSession) Karten")
+                        .font(.system(.body, design: .rounded))
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                Text("🎴")
+                    .font(.title)
+            }
         }
         .padding(20)
         .background(Color.white.opacity(0.05))

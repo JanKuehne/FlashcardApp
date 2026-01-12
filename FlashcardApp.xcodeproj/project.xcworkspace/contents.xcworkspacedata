@@ -5,24 +5,27 @@
       location = "self:">
    </FileRef>
    <FileRef
-      location = "group:AppSettings.swift">
+      location = "group:FEATURE_ROADMAP.md">
    </FileRef>
    <FileRef
-      location = "group:HalftonePattern.swift">
+      location = "group:SPRINT_1_AUDIO.md">
    </FileRef>
    <FileRef
-      location = "group:ReviewSession.swift">
+      location = "group:PROJECT_STATUS.md">
    </FileRef>
    <FileRef
-      location = "group:Achievement.swift">
+      location = "group:QUICK_CHECKLIST.md">
    </FileRef>
    <FileRef
-      location = "group:FlashcardApp.swift">
+      location = "group:AUDIO_PRIORITIES_REVISED.md">
    </FileRef>
    <FileRef
-      location = "group:AchievementsView.swift">
+      location = "group:PLANNING_COMPLETE.md">
    </FileRef>
    <FileRef
-      location = "group:BUILD_FIXES_SUMMARY.md">
+      location = "group:AudioService.swift">
+   </FileRef>
+   <FileRef
+      location = "group:AudioButton.swift">
    </FileRef>
 </Workspace>

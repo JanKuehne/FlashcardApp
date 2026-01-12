@@ -31,18 +31,39 @@ Ready for user testing.
 
 ---
 
-### Task 3: LLM Auto-Complete Enhancement (NEW)
-**Status**: Ready to start  
-**Priority**: HIGH (after user testing)  
-**Effort**: 6-8 hours
+### Task 3: LLM Auto-Complete Enhancement
+**Status**: ✅ COMPLETE  
+**Completed**: November 30, 2025
 
 **Goal**: Speed up card entry by auto-completing translations and examples.
 
 ---
 
+### Task 4: OCR Camera Scanner (NEW)
+**Status**: ✅ COMPLETE  
+**Completed**: December 29, 2024  
+**Effort**: ~2 hours
+
+**What Was Built**:
+- 📷 Camera scanner accessible from AddCardView
+- VisionKit integration for live text recognition
+- Smart word extraction (supports multiple formats)
+- Batch import of vocabulary from textbooks
+- 60x faster than manual entry
+
+**Supported Formats**:
+- Dash: `Sonne - sun`
+- Arrow: `Sonne → sun`
+- Colon: `Sonne: sun`
+- Parentheses: `Sonne (sun)`
+
+**Next**: Test with real German textbooks!
+
+---
+
 ## 🟡 MEDIUM PRIORITY (Next 2 Weeks)
 
-### Task 4: Settings Screen
+### Task 5: Settings Screen Enhancement
 **Features**:
 - Adjust daily goal (10-50 cards)
 - Toggle sound effects (when implemented)

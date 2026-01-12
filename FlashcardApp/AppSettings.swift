@@ -100,6 +100,21 @@ class AppSettings {
         }
     }
     
+    /// Google Cloud Vision API Key (stored in UserDefaults)
+    var googleVisionAPIKey: String {
+        get {
+            UserDefaults.standard.string(forKey: "googleVisionAPIKey") ?? ""
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "googleVisionAPIKey")
+        }
+    }
+    
+    /// Whether Google Vision OCR is available
+    var isGoogleVisionEnabled: Bool {
+        !googleVisionAPIKey.isEmpty && googleVisionAPIKey.starts(with: "AIza")
+    }
+    
     // MARK: - Initialization
     
     private init() {

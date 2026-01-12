@@ -30,7 +30,9 @@ final class UserProgress {
     var unlockedAchievements: [String]
     
     // Settings
-    var dailyGoal: Int             // Default 20
+    var dailyGoal: Int             // Default 100 - total cards to review per day
+    var cardsPerSession: Int       // Default 20 - cards per review session
+    var reviewMode: String         // "newest" or "all" - which cards to prioritize
     var notificationTime: Date?    // Reminder time
     var soundEnabled: Bool
     var animationsEnabled: Bool
@@ -45,7 +47,9 @@ final class UserProgress {
         self.totalCorrectAnswers = 0
         self.totalStudyTimeSeconds = 0
         self.unlockedAchievements = []
-        self.dailyGoal = 20
+        self.dailyGoal = 100           // Updated default: 100 cards/day
+        self.cardsPerSession = 20      // New: 20 cards per session
+        self.reviewMode = "newest"     // Default: prioritize newest cards
         self.soundEnabled = true
         self.animationsEnabled = true
     }

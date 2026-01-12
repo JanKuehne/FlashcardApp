@@ -26,6 +26,10 @@ final class Flashcard {
     var interval: Int              // Days until next review
     var nextReviewDate: Date       // When card is due
     
+    // Learning Queue (Anki-style)
+    var cardState: String          // "learning" or "graduated"
+    var learningStep: Int          // Number of times reviewed in learning phase (0-2)
+    
     // Statistics
     var createdDate: Date
     var lastReviewedDate: Date?
@@ -55,6 +59,10 @@ final class Flashcard {
         self.repetitions = 0
         self.interval = 0
         self.nextReviewDate = Date()
+        
+        // Learning queue defaults
+        self.cardState = "learning"  // New cards start in learning phase
+        self.learningStep = 0
         
         // Stats defaults
         self.createdDate = Date()
